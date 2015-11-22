@@ -443,6 +443,241 @@ void deadManNoTell()
 }
 
 /*----------------------------------------------------------*/
+
+void AVLrotateLeft(nodeTree *&root)
+{
+	nodeTree *tmp = root->pRight;
+	root->pRight = tmp->pLeft;
+	tmp->pLeft = root;
+	root = tmp;
+}
+
+void AVLrotateRight(nodeTree *&root)
+{
+	nodeTree *tmp = root->pLeft;
+	root->pLeft = tmp->pRight;
+	tmp->pRight = root;
+	root = tmp;
+}
+
+void AVLleftBalance(nodeTree *&root, bool &taller)
+{
+	nodeTree *&leftTree = root->pLeft;
+	switch (leftTree->balance)
+	{
+	case 0:
+		leftTree->balance = 1;
+		taller = false;
+		AVLrotateRight(root);
+		break;
+	case -1:
+		root->balance = 0;
+		leftTree->balance = 0;
+		AVLrotateRight(root);
+		break;
+	case 1:
+		nodeTree *rightTree = leftTree->pRight;
+		switch (rightTree->balance)
+		{
+		case 0:
+			root->balance = 0;
+			leftTree->balance = 0;
+			break;
+		case -1:
+			root->balance = 1;
+			leftTree->balance = 0;
+			break;
+		case 1:
+			root->balance = 0;
+			leftTree->balance = -1;
+			break;
+		}
+		rightTree->balance = 0;
+		AVLrotateLeft(leftTree);
+		AVLrotateRight(root);
+		break;
+	}
+}
+
+void AVLrightBalance(nodeTree *&root, bool &taller)
+{
+	nodeTree *&rightTree = root->pRight;
+	switch (rightTree->balance)
+	{
+	case 0:
+		rightTree->balance = -1;
+		taller = false;
+		AVLrotateLeft(root);
+		break;
+	case 1:
+		root->balance = 0;
+		rightTree->balance = 0;
+		AVLrotateLeft(root);
+		break;
+	case -1:
+		nodeTree *leftTree = rightTree->pLeft;
+		switch (leftTree->balance)
+		{
+		case 0:
+			root->balance = 0;
+			rightTree->balance = 0;
+			break;
+		case -1:
+			root->balance = 0;
+			rightTree->balance = 1;
+			break;
+		case 1:
+			root->balance = -1;
+			rightTree->balance = 0;
+			break;
+		}
+		leftTree->balance = 0;
+		AVLrotateRight(rightTree);
+		AVLrotateLeft(root);
+		break;
+	}
+}
+
+bool AVLinsert(nodeTree *&root, nodeTree *node, bool &taller)
+{
+	bool ret = 1;
+	if (root == NULL)
+	{
+		root = node;
+		taller = true;
+		return 1;
+	}
+	else if (node->key < root->key)
+	{
+		ret = AVLinsert(root->pLeft, node, taller);
+		if (taller == true)
+		{
+			switch (root->balance)
+			{
+			case -1:
+				AVLleftBalance(root, taller);
+				taller = false;
+				break;
+			case 0:
+				root->balance = -1;
+				break;
+			case 1:
+				root->balance = 0;
+				taller = false;
+				break;
+			}
+		}
+	}
+	else
+	{
+		ret = AVLinsert(root->pRight, node, taller);
+		if (taller == true)
+			switch (root->balance)
+			{
+			case -1:
+				root->balance = 0;
+				taller = false;
+				break;
+			case 0:
+				root->balance = 1;
+				break;
+			case 1:
+				AVLrightBalance(root, taller);
+				taller = false;
+				break;
+			}
+	}
+
+	return ret;
+}
+
+nodeTree* AVLremove(nodeTree *root, int key, bool &shorter)
+{
+	if (root == NULL)
+	{
+		shorter = false;
+	}
+	else if (root->key == key)
+	{
+		nodeTree *temp = root;
+		if (root->pRight == NULL)
+		{
+			root = root->pLeft;
+			shorter = true;
+			delete temp;
+		}
+		else if (root->pLeft == NULL)
+		{
+			root = root->pRight;
+			shorter = true;
+			delete temp;
+		}
+		else
+		{
+			temp = root->pRight;
+			while (temp->pLeft != NULL) temp = temp->pLeft;
+
+			root->key = temp->key;
+			root->exp = temp->exp;
+			root->balance = temp->balance;
+			root->level = temp->level;
+
+			AVLremove(root->pLeft, temp->key, shorter);
+			if(shorter == true)
+			switch(root->balance)
+			{
+				case 0:
+					root->balance = 1;
+					shorter = false;
+					break;
+				case -1:
+					root->balance = 0;
+					break;
+				case 1:
+					AVLrightBalance(root, shorter);
+					break;
+			}
+		}
+	}
+	else if (key < root->key)
+	{
+		root->pLeft = AVLremove(root->pLeft, key, shorter);
+		if(shorter == true)
+			switch(root->balance)
+			{
+			case 0:
+				root->balance = 1;
+				shorter = false;
+				break;
+			case -1:
+				root->balance = 0;
+				break;
+			case 1:
+				AVLrightBalance(root, shorter);
+				break;
+			}
+	}
+	else
+	{
+		root->pRight = AVLremove(root->pRight, key, shorter);
+		if(shorter == true)
+			switch(root->balance)
+			{
+			case 0:
+				root->balance = -1;
+				shorter = false;
+				break;
+			case 1:
+				root->balance = 0;
+				break;
+			case -1:
+				AVLleftBalance(root, shorter);
+				break;
+			}
+	}
+	return root;
+}
+
 bool BSTinsert(nodeTree *&root, nodeTree* node)
 {
 	if (root == NULL)
@@ -463,7 +698,8 @@ bool addNode(nodeTree *node)
 	}
 	else
 	{
-		return 1;
+		bool taller;
+		return AVLinsert(myTree->root, node, taller);
 	}
 }
 
@@ -509,7 +745,8 @@ void delNode(int key)
 	}
 	else
 	{
-
+		bool shorter;
+		myTree->root = AVLremove(myTree->root, key, shorter);
 	}
 }
 
