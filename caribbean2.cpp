@@ -443,7 +443,11 @@ void deadManNoTell()
 	{
 		queue *del = front;
 		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888 && isS9) isBlackBeard = 0;
+		if (front->next->ptr->key == 888 && isS9)
+		{
+			isBlackBeard = 0;
+			isAVL = 0;
+		}
 		delNode(front->next->ptr->key);
 		front = front->next;
 		delete del;
@@ -527,7 +531,11 @@ void strangeWedding()
 	{
 		queue *del = front;
 		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888) isBlackBeard = 0;
+		if (front->next->ptr->key == 888)
+		{
+			isBlackBeard = 0;
+			isAVL = 0;
+		}
 		delNode(front->next->ptr->key);
 		front = front->next;
 		delete del;
@@ -544,7 +552,11 @@ void strangeWedding()
 	{
 		queue *del = front;
 		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888 && isS9) isBlackBeard = 0;
+		if (front->next->ptr->key == 888 && isS9)
+		{
+			isBlackBeard = 0;
+			isAVL = 0;
+		}
 		delNode(front->next->ptr->key);
 		front = front->next;
 		delete del;
@@ -580,6 +592,11 @@ void driverGuy(int code)
 	while (front->next != NULL)
 	{
 		queue *del = front;
+		if (front->next->ptr->key == 888)
+		{
+			isBlackBeard = 0;
+			isAVL = 0;
+		}
 		delNode(front->next->ptr->key);
 		front = front->next;
 		delete del;
@@ -771,18 +788,20 @@ nodeTree* AVLremove(nodeTree *root, int key, bool &shorter)
 
 			root->pRight = AVLremove(root->pRight, temp->key, shorter);
 			if(shorter == true)
-			switch(root->balance)
 			{
-				case 0:
-					root->balance = 1;
-					shorter = false;
-					break;
-				case -1:
-					root->balance = 0;
-					break;
-				case 1:
-					AVLrightBalance(root, shorter);
-					break;
+				switch(root->balance)
+				{
+					case 0:
+						root->balance = -1;
+						shorter = false;
+						break;
+					case -1:
+						AVLleftBalance(root, shorter);
+						break;
+					case 1:
+						root->balance = 0;
+						break;
+				}
 			}
 		}
 	}
