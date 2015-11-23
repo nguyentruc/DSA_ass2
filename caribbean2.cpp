@@ -188,6 +188,7 @@ nodeTree* deleteLeafRNL(nodeTree *root)
 void Bermuda()
 {
 	myTree->root = deleteLeafRNL(myTree->root);
+	isBermuda = 1;
 }
 
 void deleteLevel(nodeTree *root, int level, int rLevel)
@@ -291,7 +292,7 @@ void insertNLR(nodeTree* root)
 {
 	if (root == NULL) return;
 	nodeTree *node = new nodeTree;
-	node->balance = root->balance;
+	node->balance = 0;
 	node->exp = root->exp;
 	node->key = root->key;
 	node->level = root->level;
@@ -460,7 +461,7 @@ void insertRNL(nodeTree* root)
 	if (root == NULL) return;
 	insertRNL(root->pRight);
 	nodeTree *node = new nodeTree;
-	node->balance = root->balance;
+	node->balance = 0;
 	node->exp = root->exp;
 	node->key = root->key;
 	node->level = root->level;
@@ -564,6 +565,20 @@ void strangeWedding()
 	delete front;
 }
 
+void listLNRleaf(nodeTree *root, queue *&rear)
+{
+	if (root == NULL) return;
+	listLNRleaf(root->pLeft, rear);
+	if (root->pLeft == NULL && root->pRight == NULL)
+	{
+		rear->next = new queue;
+		rear = rear->next;
+		rear->next = NULL;
+		rear->ptr = root;
+	}
+	listLNRleaf(root->pRight, rear);
+}
+
 void driverGuy(int code)
 {
 	int x = code%10;
@@ -586,7 +601,7 @@ void driverGuy(int code)
 	{
 		isRiverCrossed = 1;
 		isSoulLand = 0;
-		listLNR(myTree->root->pLeft, rear);
+		listLNRleaf(myTree->root->pLeft, rear);
 	}
 
 	while (front->next != NULL)
@@ -711,6 +726,11 @@ bool AVLinsert(nodeTree *&root, nodeTree *node, bool &taller)
 		taller = true;
 		return 1;
 	}
+	else if (node->key == root->key)
+	{
+		taller = false;
+		ret = 0;
+	}
 	else if (node->key < root->key)
 	{
 		ret = AVLinsert(root->pLeft, node, taller);
@@ -783,7 +803,7 @@ nodeTree* AVLremove(nodeTree *root, int key, bool &shorter)
 
 			root->key = temp->key;
 			root->exp = temp->exp;
-			root->balance = temp->balance;
+			//root->balance = temp->balance;
 			root->level = temp->level;
 
 			root->pRight = AVLremove(root->pRight, temp->key, shorter);
