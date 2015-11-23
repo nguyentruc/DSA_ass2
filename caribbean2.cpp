@@ -36,11 +36,13 @@ void Poseiden();
 void deleteMyTree(nodeTree*&);
 void soulLand();
 void deadManNoTell();
+void strangeWedding();
+void driverGuy(int);
 int _pow(int x, int y);
 
 pirateTree *myTree;
-bool isAVL;
-bool isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0, isJack = 0;
+bool isAVL = 0, isS9 = 0, isHalt = 0 , isRiverCrossed = 0;
+bool isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0, isJack = 0, isBlackBeard = 1;
 
 void adventure(eventList* pEvent, pirateTree*& aTree)
 {
@@ -60,7 +62,8 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 			if (!isPosiden) monsterAttack(eventCode);
 			break;
 		case 3:
-			if (!isBermuda || isSteeled) Bermuda();
+			if (!isSoulLand &&
+				((!isBermuda && !isPosiden) || (isPosiden && isSteeled))) Bermuda();
 			break;
 		case 4:
 			if (!isSteeled) Poseiden();
@@ -75,8 +78,15 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 		case 7:
 			if (isSoulLand && isJack) deadManNoTell();
 			break;
+		case 8:
+			if (isSoulLand) strangeWedding();
+			break;
+		case 9:
+			if (isS9 && !isRiverCrossed) driverGuy(eventCode);
+			break;
 		}
 		if (myTree->root == NULL) break;
+		if (isHalt) break;
 		pEvent = pEvent->pNext;
 	}
 }
@@ -206,6 +216,7 @@ bool sidaShip(nodeTree *root)
 void Poseiden()
 {
 	int height = getHeight(myTree->root);
+	isPosiden = 1;
 	if (sidaShip(myTree->root))
 	{
 		int n = (height - 2) > 0? (height - 2):0;
@@ -426,12 +437,146 @@ void deadManNoTell()
 		rear = front;
 		listLNR(myTree->root->pLeft, rear);
 	}
-	else
-	{
-		if (j == 1) isJack = 0;
-	}
 
 	//delete branch
+	while (front->next != NULL)
+	{
+		queue *del = front;
+		if (front->next->ptr->key == 777) isJack = 0;
+		if (front->next->ptr->key == 888 && isS9) isBlackBeard = 0;
+		delNode(front->next->ptr->key);
+		front = front->next;
+		delete del;
+	}
+	delete front;
+}
+
+void insertRNL(nodeTree* root)
+{
+	if (root == NULL) return;
+	insertRNL(root->pRight);
+	nodeTree *node = new nodeTree;
+	node->balance = root->balance;
+	node->exp = root->exp;
+	node->key = root->key;
+	node->level = root->level;
+	node->pLeft = NULL;
+	node->pRight = NULL;
+
+	addNode(node);
+	insertRNL(root->pLeft);
+
+
+	delete root;
+}
+
+void outsideNodeLeft(nodeTree* root, queue *&rear)
+{
+	if (root == NULL) return;
+	if (root->pLeft == NULL && root->pRight == NULL) return;
+	outsideNodeLeft(root->pLeft, rear);
+
+	rear->next = new queue;
+	rear = rear->next;
+	rear->next = NULL;
+	rear->ptr = root;
+}
+
+void outsideNodeRight(nodeTree* root, queue *&rear)
+{
+	if (root == NULL) return;
+	if (root->pLeft == NULL && root->pRight == NULL) return;
+
+	rear->next = new queue;
+	rear = rear->next;
+	rear->next = NULL;
+	rear->ptr = root;
+
+	outsideNodeLeft(root->pRight, rear);
+}
+
+void strangeWedding()
+{
+	isS9 = 1;
+	nodeTree *oldRoot = myTree->root;
+	myTree->root = new nodeTree();
+	myTree->root->balance = 0;
+	myTree->root->exp = 0;
+	myTree->root->key = 888;
+	myTree->root->level = 7;
+	myTree->root->pLeft = NULL;
+	myTree->root->pRight = NULL;
+
+	isAVL = 1;
+
+	if (!isBlackBeard)
+	{
+		isAVL = 0;
+		myTree->root = NULL;
+	}
+
+	insertRNL(oldRoot);
+
+	queue *front = new queue;
+	queue *rear = front;
+	rear->next = NULL;
+
+	outsideNodeLeft(myTree->root->pLeft, rear);
+
+	while (front->next != NULL)
+	{
+		queue *del = front;
+		if (front->next->ptr->key == 777) isJack = 0;
+		if (front->next->ptr->key == 888) isBlackBeard = 0;
+		delNode(front->next->ptr->key);
+		front = front->next;
+		delete del;
+	}
+	delete front;
+
+	front = new queue;
+	rear = front;
+	rear->next = NULL;
+
+	outsideNodeRight(myTree->root->pRight, rear);
+
+	while (front->next != NULL)
+	{
+		queue *del = front;
+		if (front->next->ptr->key == 777) isJack = 0;
+		if (front->next->ptr->key == 888 && isS9) isBlackBeard = 0;
+		delNode(front->next->ptr->key);
+		front = front->next;
+		delete del;
+	}
+	delete front;
+}
+
+void driverGuy(int code)
+{
+	int x = code%10;
+
+	if (isJack)
+	{
+		isHalt = 1;
+		return;
+	}
+
+	queue *front = new queue;
+	queue *rear = front;
+	rear->next = NULL;
+
+	if (getCount(myTree->root) > (3 * x))
+	{
+		listLNR(myTree->root->pRight, rear);
+	}
+	else
+	{
+		isRiverCrossed = 1;
+		isSoulLand = 0;
+		listLNR(myTree->root->pLeft, rear);
+	}
+
 	while (front->next != NULL)
 	{
 		queue *del = front;
@@ -624,7 +769,7 @@ nodeTree* AVLremove(nodeTree *root, int key, bool &shorter)
 			root->balance = temp->balance;
 			root->level = temp->level;
 
-			AVLremove(root->pLeft, temp->key, shorter);
+			root->pRight = AVLremove(root->pRight, temp->key, shorter);
 			if(shorter == true)
 			switch(root->balance)
 			{
