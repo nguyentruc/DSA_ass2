@@ -23,7 +23,6 @@ struct queue
 
 void adventure(eventList*, pirateTree*&);
 int getHeight(nodeTree*);
-void copyTree();
 bool addNode(nodeTree*);
 void delNode(int);
 int getCount(nodeTree*);
@@ -38,6 +37,7 @@ void soulLand();
 void deadManNoTell();
 void strangeWedding();
 void driverGuy(int);
+void Hades();
 int _pow(int x, int y);
 
 pirateTree *myTree;
@@ -84,6 +84,9 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 		case 9:
 			if (isS9 && !isRiverCrossed) driverGuy(eventCode);
 			break;
+		case 10:
+			if (!isJack && isRiverCrossed) Hades();
+			break;
 		}
 		if (myTree->root == NULL) break;
 		if (isHalt) break;
@@ -99,6 +102,8 @@ int extractEvent(int &eventCode)
 	if (eventCode == 5) return 6;
 	if (eventCode == 6) return 7;
 	if (eventCode == 7) return 8;
+	if (eventCode == 13) return 10;
+	if (eventCode == 999) return 11;
 
 	if (eventCode / 10000 == 1) return 1;
 	if (eventCode / 10000 == 2) return 2;
@@ -617,6 +622,88 @@ void driverGuy(int code)
 		delete del;
 	}
 	delete front;
+}
+
+nodeTree* makeTrace(nodeTree *root, int prev)
+{
+	if (root == NULL) return NULL;
+	nodeTree* traceRoot = new nodeTree;
+
+	traceRoot->key = prev + root->key;
+	traceRoot->pLeft = makeTrace(root->pLeft, traceRoot->key);
+	traceRoot->pRight = makeTrace(root->pRight, traceRoot->key);
+
+	return traceRoot;
+}
+
+int processTraceKey(nodeTree *root)
+{
+	if (root == NULL) return 0;
+	if (root->pLeft == NULL && root->pRight == NULL) return root->key;
+
+	int left = processTraceKey(root->pLeft);
+	int right = processTraceKey(root->pRight);
+
+	if ((left % 13 == 0 && right % 13 == 0) || (left % 13 != 0 && right % 13 != 0))
+	{
+		root->key = (left > right)? left : right;
+	}
+	else if (left % 13 == 0) root->key = left;
+	else root->key = right;
+
+	return root->key;
+}
+
+void Tracing(nodeTree *root, nodeTree *traceRoot, queue *&rear, int key)
+{
+	if (root == NULL) return;
+	Tracing(root->pLeft, traceRoot->pLeft, rear, key);
+	if (traceRoot->key == key)
+	{
+		rear->next = new queue;
+		rear = rear->next;
+		rear->next = NULL;
+		rear->ptr = root;
+	}
+	Tracing(root->pRight, traceRoot->pRight, rear, key);
+}
+
+void Hades()
+{
+	nodeTree *traceRoot = NULL;
+
+	traceRoot = makeTrace(myTree->root, 0);
+	traceRoot->key = processTraceKey(traceRoot);
+
+	if (traceRoot->key % 13 == 0)
+	{
+		isJack = 1;
+		queue *front = new queue;
+		queue *rear = front;
+		rear->next = NULL;
+
+		Tracing(myTree->root, traceRoot, rear, traceRoot->key);
+		while (front->next != NULL)
+		{
+			queue *del = front;
+			if (front->next->ptr->key == 888)
+			{
+				isBlackBeard = 0;
+				isAVL = 0;
+			}
+			int num = front->next->ptr->key;
+			delNode(num);
+			front = front->next;
+			delete del;
+		}
+		delete front;
+	}
+	else
+	{
+		deleteMyTree(myTree->root);
+	}
+
+	deleteMyTree(traceRoot);
 }
 
 /*----------------------------------------------------------*/
