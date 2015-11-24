@@ -17,7 +17,7 @@
 
 struct queue
 {
-	nodeTree *ptr;
+	int key;
 	queue *next;
 };
 
@@ -26,7 +26,7 @@ int getHeight(nodeTree*);
 bool addNode(nodeTree*);
 void delNode(int);
 int getCount(nodeTree*);
-int extractEvent(int&);
+int extractEvent(int);
 void addShip(int);
 void monsterAttack(int);
 void monsterAttack2(int);
@@ -52,8 +52,8 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 
 	while (pEvent != NULL)
 	{
-		eventCode = pEvent->nEventCode;
-		switch (extractEvent(eventCode))
+		eventCode = (pEvent->nEventCode > 0)? pEvent->nEventCode: (pEvent->nEventCode * -1);
+		switch (extractEvent(pEvent->nEventCode))
 		{
 		case 1:
 			if (!isSoulLand) addShip(eventCode);
@@ -94,11 +94,11 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 	}
 }
 
-int extractEvent(int &eventCode)
+int extractEvent(int eventCode)
 {
-	eventCode = (eventCode > 0)? eventCode: (eventCode * -1);
+	//eventCode = (eventCode > 0)? eventCode: (eventCode * -1);
 	if (eventCode == 777) return 3;
-	if (eventCode == 11111) return 4;
+	if (eventCode == -11111) return 4;
 	if (eventCode == 5) return 6;
 	if (eventCode == 6) return 7;
 	if (eventCode == 7) return 8;
@@ -106,8 +106,8 @@ int extractEvent(int &eventCode)
 	if (eventCode == 999) return 11;
 
 	if (eventCode / 10000 == 1) return 1;
-	if (eventCode / 10000 == 2) return 2;
-	if (eventCode / 10000 == 3) return 5;
+	if (eventCode / 10000 == -2) return 2;
+	if (eventCode / 10000 == -3) return 5;
 	if (eventCode / 10 == 8) return 9;
 
 	return 0;
@@ -344,7 +344,7 @@ void listLNR(nodeTree *root, queue *&rear)
 	rear->next = new queue;
 	rear = rear->next;
 	rear->next = NULL;
-	rear->ptr = root;
+	rear->key = root->key;
 	listLNR(root->pRight, rear);
 }
 
@@ -352,20 +352,25 @@ void deadManNoTell()
 {
 	//Find choosen Node
 	nodeTree *choosenNode = NULL;
-	queue *front = new queue;
-	queue *rear = front;
-	rear->next = NULL;
+	struct ptrQueue
+	{
+		nodeTree *ptr;
+		ptrQueue *next;
+	};
+	ptrQueue *pfront = new ptrQueue;
+	ptrQueue *prear = pfront;
+	prear->next = NULL;
 
 	int cnt = 1;
 	int j = getHeight(myTree->root);
 	j = (j > 4)? j/2 : 1;
-	rear->ptr = myTree->root;
+	prear->ptr = myTree->root;
 
-	while (front != NULL)
+	while (pfront != NULL)
 	{
-		nodeTree *node = front->ptr;
-		queue *del = front;
-		front = front->next;
+		nodeTree *node = pfront->ptr;
+		ptrQueue *del = pfront;
+		pfront = pfront->next;
 		delete del;
 
 		if (node->pLeft != NULL)
@@ -376,10 +381,10 @@ void deadManNoTell()
 				choosenNode = node->pLeft;
 				break;
 			}
-			rear->next = new queue;
-			rear = rear->next;
-			rear->ptr = node->pLeft;
-			rear->next = NULL;
+			prear->next = new ptrQueue;
+			prear = prear->next;
+			prear->ptr = node->pLeft;
+			prear->next = NULL;
 		}
 		if (node->pRight != NULL)
 		{
@@ -389,19 +394,22 @@ void deadManNoTell()
 				choosenNode = node->pRight;
 				break;
 			}
-			rear->next = new queue;
-			rear = rear->next;
-			rear->ptr = node->pRight;
-			rear->next = NULL;
+			prear->next = new ptrQueue;
+			prear = prear->next;
+			prear->ptr = node->pRight;
+			prear->next = NULL;
 		}
 	}
 
-	while (front != NULL)
+	while (pfront != NULL)
 	{
-		queue *del = front;
-		front = front->next;
+		ptrQueue *del = pfront;
+		pfront = pfront->next;
 		delete del;
 	}
+
+	queue *front = NULL;
+	queue *rear = NULL;
 
 	//Find branch
 	bool flag = 0;
@@ -419,7 +427,7 @@ void deadManNoTell()
 			rear->next = new queue;
 			rear = rear->next;
 			rear->next = NULL;
-			rear->ptr = node;
+			rear->key = node->key;
 			cnt++;
 			if (cnt == 4) flag = 1;
 
@@ -448,13 +456,13 @@ void deadManNoTell()
 	while (front->next != NULL)
 	{
 		queue *del = front;
-		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888 && isS9)
+		if (front->next->key == 777) isJack = 0;
+		if (front->next->key == 888 && isS9)
 		{
 			isBlackBeard = 0;
 			isAVL = 0;
 		}
-		delNode(front->next->ptr->key);
+		delNode(front->next->key);
 		front = front->next;
 		delete del;
 	}
@@ -489,7 +497,7 @@ void outsideNodeLeft(nodeTree* root, queue *&rear)
 	rear->next = new queue;
 	rear = rear->next;
 	rear->next = NULL;
-	rear->ptr = root;
+	rear->key = root->key;
 }
 
 void outsideNodeRight(nodeTree* root, queue *&rear)
@@ -500,7 +508,7 @@ void outsideNodeRight(nodeTree* root, queue *&rear)
 	rear->next = new queue;
 	rear = rear->next;
 	rear->next = NULL;
-	rear->ptr = root;
+	rear->key = root->key;
 
 	outsideNodeLeft(root->pRight, rear);
 }
@@ -536,13 +544,13 @@ void strangeWedding()
 	while (front->next != NULL)
 	{
 		queue *del = front;
-		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888)
+		if (front->next->key == 777) isJack = 0;
+		if (front->next->key == 888)
 		{
 			isBlackBeard = 0;
 			isAVL = 0;
 		}
-		delNode(front->next->ptr->key);
+		delNode(front->next->key);
 		front = front->next;
 		delete del;
 	}
@@ -557,13 +565,13 @@ void strangeWedding()
 	while (front->next != NULL)
 	{
 		queue *del = front;
-		if (front->next->ptr->key == 777) isJack = 0;
-		if (front->next->ptr->key == 888 && isS9)
+		if (front->next->key == 777) isJack = 0;
+		if (front->next->key == 888 && isS9)
 		{
 			isBlackBeard = 0;
 			isAVL = 0;
 		}
-		delNode(front->next->ptr->key);
+		delNode(front->next->key);
 		front = front->next;
 		delete del;
 	}
@@ -579,7 +587,7 @@ void listLNRleaf(nodeTree *root, queue *&rear)
 		rear->next = new queue;
 		rear = rear->next;
 		rear->next = NULL;
-		rear->ptr = root;
+		rear->key = root->key;
 	}
 	listLNRleaf(root->pRight, rear);
 }
@@ -612,12 +620,12 @@ void driverGuy(int code)
 	while (front->next != NULL)
 	{
 		queue *del = front;
-		if (front->next->ptr->key == 888)
+		if (front->next->key == 888)
 		{
 			isBlackBeard = 0;
 			isAVL = 0;
 		}
-		delNode(front->next->ptr->key);
+		delNode(front->next->key);
 		front = front->next;
 		delete del;
 	}
@@ -644,12 +652,13 @@ int processTraceKey(nodeTree *root)
 	int left = processTraceKey(root->pLeft);
 	int right = processTraceKey(root->pRight);
 
-	if ((left % 13 == 0 && right % 13 == 0) || (left % 13 != 0 && right % 13 != 0))
+	if ((left % 13 == 0 && right % 13 == 0) || (left % 13 != 0 && right % 13 != 0)
+			|| left == 0 || right == 0)
 	{
 		root->key = (left > right)? left : right;
 	}
 	else if (left % 13 == 0) root->key = left;
-	else root->key = right;
+	else if (right % 13 == 0)root->key = right;
 
 	return root->key;
 }
@@ -663,7 +672,7 @@ void Tracing(nodeTree *root, nodeTree *traceRoot, queue *&rear, int key)
 		rear->next = new queue;
 		rear = rear->next;
 		rear->next = NULL;
-		rear->ptr = root;
+		rear->key = root->key;
 	}
 	Tracing(root->pRight, traceRoot->pRight, rear, key);
 }
@@ -686,13 +695,13 @@ void Hades()
 		while (front->next != NULL)
 		{
 			queue *del = front;
-			if (front->next->ptr->key == 888)
+			if (front->next->key == 888)
 			{
 				isBlackBeard = 0;
 				isAVL = 0;
 			}
-			int num = front->next->ptr->key;
-			delNode(num);
+			//num = front->next->ptr->key;
+			delNode(front->next->key);
 			front = front->next;
 			delete del;
 		}
