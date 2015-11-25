@@ -510,7 +510,7 @@ void outsideNodeRight(nodeTree* root, queue *&rear)
 	rear->next = NULL;
 	rear->key = root->key;
 
-	outsideNodeLeft(root->pRight, rear);
+	outsideNodeRight(root->pRight, rear);
 }
 
 void strangeWedding()
@@ -566,7 +566,7 @@ void strangeWedding()
 	{
 		queue *del = front;
 		if (front->next->key == 777) isJack = 0;
-		if (front->next->key == 888 && isS9)
+		if (front->next->key == 888)
 		{
 			isBlackBeard = 0;
 			isAVL = 0;
@@ -663,18 +663,21 @@ int processTraceKey(nodeTree *root)
 	return root->key;
 }
 
-void Tracing(nodeTree *root, nodeTree *traceRoot, queue *&rear, int key)
+void Tracing(nodeTree *root, nodeTree *traceRoot, queue *&rear, int key, bool &same)
 {
 	if (root == NULL) return;
-	Tracing(root->pLeft, traceRoot->pLeft, rear, key);
+	Tracing(root->pLeft, traceRoot->pLeft, rear, key, same);
 	if (traceRoot->key == key)
 	{
 		rear->next = new queue;
 		rear = rear->next;
 		rear->next = NULL;
 		rear->key = root->key;
+		if (traceRoot->pLeft != NULL && traceRoot->pRight != NULL)
+			if ((traceRoot->pLeft->key == traceRoot->pRight->key)
+					&& ( traceRoot->pLeft->key == key)) same = 1;
 	}
-	Tracing(root->pRight, traceRoot->pRight, rear, key);
+	Tracing(root->pRight, traceRoot->pRight, rear, key, same);
 }
 
 void Hades()
@@ -690,8 +693,52 @@ void Hades()
 		queue *front = new queue;
 		queue *rear = front;
 		rear->next = NULL;
+		bool same = 0;
+		Tracing(myTree->root, traceRoot, rear, traceRoot->key, same);
+		if (same == 0)
+		{
+			while (front != NULL)
+			{
+				queue *del = front;
+				front = front->next;
+				delete del;
+			}
+			int key = traceRoot->key;
+			front = new queue;
+			rear = new queue;
+			front->next = rear;
+			rear->next = NULL;
+			rear->key = myTree->root->key;
 
-		Tracing(myTree->root, traceRoot, rear, traceRoot->key);
+			nodeTree *root = myTree->root;
+			while (traceRoot->pLeft != NULL || traceRoot->pRight != NULL)
+			{
+				if (traceRoot->pLeft != NULL)
+					if (traceRoot->pLeft->key == key)
+					{
+						traceRoot = traceRoot->pLeft;
+						root = root->pLeft;
+						rear->next = new queue;
+						rear = rear->next;
+						rear->next=NULL;
+						rear->key = root->key;
+						continue;
+					}
+
+				if (traceRoot->pRight != NULL)
+					if (traceRoot->pRight->key == key)
+					{
+						traceRoot = traceRoot->pRight;
+						root = root->pRight;
+						rear->next = new queue;
+						rear = rear->next;
+						rear->next=NULL;
+						rear->key = root->key;
+						continue;
+					}
+			}
+		}
+
 		while (front->next != NULL)
 		{
 			queue *del = front;
@@ -713,6 +760,11 @@ void Hades()
 	}
 
 	deleteMyTree(traceRoot);
+}
+
+void timeMachine()
+{
+
 }
 
 /*----------------------------------------------------------*/
