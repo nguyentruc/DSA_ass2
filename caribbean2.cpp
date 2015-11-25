@@ -41,28 +41,31 @@ void Hades();
 int _pow(int x, int y);
 
 pirateTree *myTree;
-bool isAVL = 0, isS9 = 0, isHalt = 0 , isRiverCrossed = 0;
-bool isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0, isJack = 0, isBlackBeard = 1;
+bool isAVL = 0, isS9 = 0, isHalt = 0 , isRiverCrossed = 0, isS12 = 0;
+bool isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0, isJack = 1, isBlackBeard = 1;
+int eventNum, prev11;
 
 void adventure(eventList* pEvent, pirateTree*& aTree)
 {
-	int eventCode;
-
+	int eventCode, backEvent = 0;
+	eventList *backup = pEvent;
 	myTree = aTree;
-
+	eventNum = 0;
+	prev11 = 0;
 	while (pEvent != NULL)
 	{
 		eventCode = (pEvent->nEventCode > 0)? pEvent->nEventCode: (pEvent->nEventCode * -1);
+		eventNum++;
 		switch (extractEvent(pEvent->nEventCode))
 		{
 		case 1:
-			if (!isSoulLand) addShip(eventCode);
+			if (!isSoulLand && !isRiverCrossed) addShip(eventCode);
 			break;
 		case 2:
 			if (!isPosiden) monsterAttack(eventCode);
 			break;
 		case 3:
-			if (!isSoulLand &&
+			if (!isSoulLand && !isRiverCrossed &&
 				((!isBermuda && !isPosiden) || (isPosiden && isSteeled))) Bermuda();
 			break;
 		case 4:
@@ -72,7 +75,7 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 			if (isSteeled) monsterAttack2(eventCode);
 			break;
 		case 6:
-			if (isSoulLand) break;
+			if (isSoulLand || isRiverCrossed) break;
 			if (isSteeled) soulLand(); else deleteMyTree(myTree->root);
 			break;
 		case 7:
@@ -85,11 +88,39 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 			if (isS9 && !isRiverCrossed) driverGuy(eventCode);
 			break;
 		case 10:
-			if (!isJack && isRiverCrossed) Hades();
+			if (!isJack && isRiverCrossed && prev11 == 0)
+			{
+				Hades();
+				prev11 = eventNum;
+			}
+			break;
+		case 11:
+			if (isJack && prev11 > 0)
+			{
+				backEvent = (999 % prev11) + 1;
+				isS12 = 1;
+				eventNum = 0;
+				pEvent = backup;
+				isAVL = 0; isS9 = 0; isRiverCrossed = 0;
+				isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0,
+				isBlackBeard = 1;
+				deleteMyTree(myTree->root);
+				continue;
+			}
 			break;
 		}
 		if (myTree->root == NULL) break;
 		if (isHalt) break;
+
+		if (isS12 && eventNum == backEvent)
+		{
+			if (!isJack)
+			{
+				deleteMyTree(myTree->root);
+			}
+			break;
+		}
+
 		pEvent = pEvent->pNext;
 	}
 }
@@ -359,6 +390,7 @@ void deadManNoTell()
 	};
 	ptrQueue *pfront = new ptrQueue;
 	ptrQueue *prear = pfront;
+	//pfront->next = prear;
 	prear->next = NULL;
 
 	int cnt = 1;
@@ -366,12 +398,13 @@ void deadManNoTell()
 	j = (j > 4)? j/2 : 1;
 	prear->ptr = myTree->root;
 
-	while (pfront != NULL)
+	if (j == 1) choosenNode = myTree->root;
+
+	while (j!= 1 && pfront != NULL)
 	{
 		nodeTree *node = pfront->ptr;
 		ptrQueue *del = pfront;
-		pfront = pfront->next;
-		delete del;
+
 
 		if (node->pLeft != NULL)
 		{
@@ -399,6 +432,9 @@ void deadManNoTell()
 			prear->ptr = node->pRight;
 			prear->next = NULL;
 		}
+
+		pfront = pfront->next;
+		delete del;
 	}
 
 	while (pfront != NULL)
@@ -429,7 +465,7 @@ void deadManNoTell()
 			rear->next = NULL;
 			rear->key = node->key;
 			cnt++;
-			if (cnt == 4) flag = 1;
+			if (cnt >= 4 && node->pLeft == NULL && node->pRight == NULL) flag = 1;
 
 			if (way == 0) node = node->pLeft;
 			else node = node->pRight;
@@ -760,11 +796,6 @@ void Hades()
 	}
 
 	deleteMyTree(traceRoot);
-}
-
-void timeMachine()
-{
-
 }
 
 /*----------------------------------------------------------*/
