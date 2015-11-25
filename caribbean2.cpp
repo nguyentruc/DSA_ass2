@@ -102,8 +102,9 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 				eventNum = 0;
 				pEvent = backup;
 				isAVL = 0; isS9 = 0; isRiverCrossed = 0;
-				isSoulLand = 0, isPosiden = 0, isBermuda = 0, isSteeled = 0,
+				isSoulLand = 0; isPosiden = 0; isBermuda = 0; isSteeled = 0;
 				isBlackBeard = 1;
+				prev11 = 0;
 				deleteMyTree(myTree->root);
 				continue;
 			}
