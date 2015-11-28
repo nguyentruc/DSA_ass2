@@ -62,17 +62,17 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 			if (!isSoulLand && !isRiverCrossed) addShip(eventCode);
 			break;
 		case 2:
-			if (!isPosiden) monsterAttack(eventCode);
+			if (!isPosiden && !isRiverCrossed) monsterAttack(eventCode);
 			break;
 		case 3:
 			if (!isSoulLand && !isRiverCrossed &&
 				((!isBermuda && !isPosiden) || (isPosiden && isSteeled))) Bermuda();
 			break;
 		case 4:
-			if (!isSteeled) Poseiden();
+			if (!isSteeled && !isRiverCrossed) Poseiden();
 			break;
 		case 5:
-			if (isSteeled) monsterAttack2(eventCode);
+			if (isSteeled && !isRiverCrossed) monsterAttack2(eventCode);
 			break;
 		case 6:
 			if (isSoulLand || isRiverCrossed) break;
