@@ -72,7 +72,7 @@ void adventure(eventList* pEvent, pirateTree*& aTree)
 			if (!isSteeled && !isRiverCrossed) Poseiden();
 			break;
 		case 5:
-			if (isSteeled && !isRiverCrossed) monsterAttack2(eventCode);
+			if (isSteeled && !isRiverCrossed && !isSoulLand) monsterAttack2(eventCode);
 			break;
 		case 6:
 			if (isSoulLand || isRiverCrossed) break;
